@@ -1,5 +1,8 @@
 package Entities;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class Unit {
     private UnitType type;
     private Hero owner;
@@ -211,5 +214,38 @@ public class Unit {
     @Override
     public String toString() {
         return this.symbol + "";
+    }
+
+    public List<Integer> acceptDamage(int damage) {
+
+        int totalHealth = (amount - 1) * maxHealth + currentHealth;
+        int totalSurvHealth = totalHealth - damage;
+        int enemySurv;
+        int enemyHealth;
+        int enemyKilled;
+
+        if(totalSurvHealth > 0) {
+            enemySurv = totalSurvHealth / maxHealth;
+            enemyHealth = totalSurvHealth % maxHealth;
+            if(enemyHealth == 0)
+            {
+                enemySurv--;
+                enemyHealth = maxHealth;
+            }
+        } else
+        {
+            enemySurv = 0;
+            enemyHealth = 0;
+            setDead();
+        }
+
+        enemyKilled = amount - enemySurv;
+        amount = enemySurv;
+        currentHealth = enemyHealth;
+
+        List<Integer> output = new ArrayList<Integer>();
+        output.add(enemyKilled);
+        output.add(enemySurv);
+        return output;
     }
 }

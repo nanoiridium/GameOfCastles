@@ -75,6 +75,16 @@ public class BotAI {
             {
                 x = computerHeroes.get(0).getxCoord();
                 y = computerHeroes.get(0).getyCoord();
+                String sym = map.getSymbol(x, y) + "";
+                if(sym.equals("V") || sym.equals("v") || sym.equals("^"))
+                {
+                    computerHeroes.get(0).damageFromTheWall(enemy);
+                    if(computerHeroes.get(0).isDead()) {
+                        computerHeroes.remove(0);
+                        return;
+                    }
+                }
+
                 map.setSymbol(x, y, computerHeroes.get(0).getPrevSymbol());
                 if (x - 1 >= 0 && y - 1 >= 0) {
                     if ((enemyHero = gameLogic.isBattle(enemy, x - 1, y - 1)) == null) {
@@ -84,6 +94,7 @@ public class BotAI {
                         break;
                     }
                 }
+
             }
         }
         if(turnNumber >= 5) {
@@ -91,6 +102,17 @@ public class BotAI {
             {
                 x = computerHeroes.get(0).getxCoord();
                 y = computerHeroes.get(0).getyCoord();
+                String sym = map.getSymbol(x, y) + "";
+
+                if(sym.equals("V") || sym.equals("v") || sym.equals("^"))
+                {
+                    computerHeroes.get(0).damageFromTheWall(enemy);
+                    if(computerHeroes.get(0).isDead()) {
+                        computerHeroes.remove(0);
+                        return;
+                    }
+                }
+
                 if(enemy.isHeroInCastle(computerHeroes.get(0)))
                     return;
                 map.setSymbol(x, y, computerHeroes.get(0).getPrevSymbol());
@@ -143,10 +165,7 @@ public class BotAI {
                 battleMap.updateLog("Computer Attacks" + "\n");
                 int gold = battleMap.attack(selectedUnit, selectedEnemyUnit);
                 computerHero.getHomeCastle().addGold(gold);
-                if(selectedEnemyUnit.isDead())
-                {
-                    playerHero.getArmy().remove(selectedEnemyUnit);
-                }
+                playerHero.removeDeadUnits();
                 break;
             }
 

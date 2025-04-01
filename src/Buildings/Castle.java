@@ -3,13 +3,16 @@ package Buildings;
 import java.util.ArrayList;
 import java.util.List;
 
+import Entities.ElectroWall;
 import Entities.Hero;
 
 public class Castle {
     private List<Building> buildings = new ArrayList<>();
     private List<Hero> heroes = new ArrayList<>();
+    private ElectroWall wall;
     private int gold;
     private char symbol;
+    private int wallCooldown;
 
     private int xCoord;
     private int yCoord;
@@ -22,6 +25,7 @@ public class Castle {
         this.xCoord = xCoord;
         this.yCoord = yCoord;
         heroes.add(new Hero(this, heroSymbol));
+        wallCooldown = 0;
     }
 
     public boolean isHeroInCastle() {
@@ -75,11 +79,25 @@ public class Castle {
 
     public void buyBuilding(BuildingType type) {
         if (!isBuiltThisTurn) {
-            Building building = new Building(type);
-            if (buildings.stream().anyMatch(b -> b.getType() == type) || gold - building.getCost() < 0)
+            Building newBuilding = new Building(type);
+
+            for (Building building : buildings) {
+                if (building.getType().equals(type)) {
+                    if(building.getType().equals(BuildingType.ELECTROHOUSE)) {
+                        if (gold - newBuilding.getCost() < 0)
+                            return;
+                        gold -= newBuilding.getCost();
+                        building.upgradeBuilding(1);
+                    }
+                    return;
+                }
+            }
+
+            if (gold - newBuilding.getCost() < 0)
                 return;
-            gold -= building.getCost();
-            buildings.add(building);
+
+            gold -= newBuilding.getCost();
+            buildings.add(newBuilding);
             isBuiltThisTurn = true;
         }
     }
@@ -105,6 +123,40 @@ public class Castle {
         for (Hero hero : heroes) {
             hero.newTurn();
         }
+
+        if(wallCooldown > 0) {
+            wallCooldown--;
+        }
+
+        if(wall != null) {
+            wall.newTurn();
+            if(wall.getCurrentDuration() <= 0) {
+                wallCooldown = Math.max(0, 3 - getBuildingByType(BuildingType.ELECTROHOUSE).getLevel());
+                wall = null;
+            }
+        }
     }
-    // Методы для найма юнитов/героя
+
+    public void placeWall(int xCoord, int yCoord) {
+        wall = new ElectroWall(this, xCoord, yCoord);
+    }
+
+    public Building getBuildingByType(BuildingType type)
+    {
+        for(Building building : buildings)
+        {
+            if(building.getType().equals(type))
+                return building;
+        }
+        return null;
+    }
+
+    public ElectroWall getElectroWall()
+    {
+        return wall;
+    }
+
+    public int getElectroWallCooldown(){
+        return this.wallCooldown;
+    }
 }

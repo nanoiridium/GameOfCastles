@@ -2,12 +2,10 @@ package GameLogic;
 
 import java.io.IOException;
 import java.util.List;
+
+import Entities.*;
 import jline.console.ConsoleReader;
 
-import Entities.Hero;
-import Entities.Unit;
-import Entities.UnitType;
-import Entities.Direction;
 import Buildings.Castle;
 import GameMap.GameMap;
 import Buildings.Building;
@@ -79,6 +77,9 @@ public class GameLogic {
                 console.print("Selected hero: " + heroes.get(choosenHero).getSymbol());
                 console.println();
                 console.println(heroes.get(choosenHero).toString());
+                if(!enemies.isEmpty()) {
+                    console.println(enemies.get(0).toString());
+                }
                 input = console.readLine(
                     """
                             (Q - next turn)
@@ -94,6 +95,8 @@ public class GameLogic {
                             (B - buy building)
                             (U - buy hero)
                             (Y - hire army)
+                            (O - electrowall actions)
+                            (` - quit game)
                             action>""");
                 chooseAction(heroes.get(choosenHero), input); //Выбор действия
             }
@@ -105,6 +108,7 @@ public class GameLogic {
                             (Q - next turn)
                             (B - buy building)
                             (U - buy hero)
+                            (` - quit game)
                             action>""");
                 chooseAction(null, input); //Выбор действия
             }
@@ -226,7 +230,12 @@ public class GameLogic {
                         hireArmy(playerCastle, hero);
                     }
                 }
-
+                case "o" -> {
+                    chooseElectroWallAction();
+                }
+                case "`" -> { //Выход из игры
+                    quitGame();
+                }
                 default -> {
                     break;
                 }
@@ -246,6 +255,9 @@ public class GameLogic {
                         playerCastle.hireHero(name.charAt(0));
                     }
                 }
+                case "`" -> { //Выход из игры
+                    quitGame();
+                }
                 default -> {
                     break;
                 }
@@ -254,13 +266,13 @@ public class GameLogic {
     }
 
     private BuildingType chooseBuilding() throws IOException { //Выбираем что построить
-        console.flush();
         console.clearScreen();
+        console.flush();
         console.println("You have " + playerCastle.getGold() + " gold!");
         List<Building> buildings = playerCastle.getBuildings();
         console.println("Already built: ");
         for (Building building : buildings) {
-            console.println(building.getName());
+            console.println(building.getName() + "(" + building.getLevel() + ")");
         }
         String input = console.readLine("""
                 (0 - TAVERN)
@@ -270,11 +282,12 @@ public class GameLogic {
                 (4 - SMITH)
                 (5 - ACADEMY)
                 (6 - CHURCH)
+                (7 - ELECTROHOUSE)
                 (anykey - back)
                 action>""");
         int index;
         return switch (input) {
-            case "0", "1", "2", "3", "4", "5", "6" -> {
+            case "0", "1", "2", "3", "4", "5", "6", "7" -> {
                 index = Integer.parseInt(input); //Заменяем целвм числом
                 yield BuildingType.values()[index]; //Достаём нужный тип здания
             }
@@ -283,8 +296,8 @@ public class GameLogic {
     }
 
     private boolean hireArmy(Castle castle, Hero hero) throws IOException {
-        console.flush();
         console.clearScreen();
+        console.flush();
         console.println("You have " + playerCastle.getGold() + " gold!");
         List<Unit> army = hero.getArmy();
         console.println("Current Army: ");
@@ -391,5 +404,84 @@ public class GameLogic {
     public void setBattleMap(BattleMap map) {
         battleMap = map;
         isBattle = true;
+    }
+
+    private void chooseElectroWallAction() throws IOException {
+        String input = "";
+        do {
+            map.updateMap(playerCastle, computerCastle);
+            map.printMap();
+
+            ElectroWall wall = playerCastle.getElectroWall();
+
+            if(wall != null) {
+                int x = wall.getxCoord();
+                int y = wall.getyCoord();
+                int size = map.getSize();
+
+                input = console.readLine(
+                        """
+                                (W - up)
+                                (A - left)
+                                (S - down)
+                                (D - right)
+                                (Q - back to map)
+                                action>""");
+                switch (input) {
+                    case "w" -> {
+                        if (x - 1 >= 0)
+                            wall.move(Direction.UP);
+
+                    }
+                    case "a" -> {
+                        if (y - 1 >= 0)
+                            wall.move(Direction.LEFT);
+                    }
+                    case "s" -> {
+                        if (x + 1 < size)
+                            wall.move(Direction.DOWN);
+                    }
+                    case "d" -> {
+                        if (y + 1 + 5 < size)
+                            wall.move(Direction.RIGHT);
+                    }
+                    case "q" -> {
+                        break;
+                    }
+                }
+            } else {
+                input = console.readLine(
+                        """
+                                (B - place wall)
+                                (Q - back to map)
+                                action>""");
+                switch (input) {
+                    case "b" -> {
+                        if (playerCastle.getElectroWall() == null
+                                && playerCastle.getElectroWallCooldown() <= 0
+                                && playerCastle.getBuildingByType(BuildingType.ELECTROHOUSE) != null)
+                            playerCastle.placeWall(map.getSize() / 2, map.getSize() / 2 - 2);
+                        map.updateMap(playerCastle, computerCastle);
+                        map.printMap();
+                    }
+                    case "q" -> {
+                        break;
+                    }
+                }
+            }
+            map.updateMap(playerCastle, computerCastle);
+            map.printMap();
+        } while(!input.equals("q"));
+    }
+
+    private void quitGame() throws IOException {
+        console.clearScreen();
+        console.flush();
+        String input = console.readLine("Are you sure you want to quit? (y/n)");
+        if (input.equals("y")) {
+            System.exit(0);
+        } else {
+            return;
+        }
     }
 }

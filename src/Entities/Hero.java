@@ -161,11 +161,30 @@ public class Hero {
     @Override
     public String toString()
     {
-        StringBuilder output = new StringBuilder("Army:[ ");
+        StringBuilder output = new StringBuilder("<" + this.symbol + ">Army:[ ");
         for (Unit unit : army) {
-            output.append(unit.toString()).append("(").append(unit.getAmount()).append(") ");
+            output.append(unit.toString()).append("(").append(unit.getAmount()).append(".").append(unit.getCurrentHealth()).append(") ");
         }
         output.append("]");
         return output.toString();
+    }
+
+    public void damageFromTheWall(Castle enemy)
+    {
+        ElectroWall wall = enemy.getElectroWall();
+        for (Unit unit : army) {
+            unit.acceptDamage(wall.getDamage());
+        }
+        removeDeadUnits();
+    }
+
+    public void removeDeadUnits()
+    {
+        army.removeIf(Unit::isDead);
+    }
+
+    public boolean isDead()
+    {
+        return army.isEmpty();
     }
 }

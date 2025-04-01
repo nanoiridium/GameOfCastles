@@ -7,6 +7,7 @@ public class Building {
     private UnitType unitType;
     private String name;
     private int cost;
+    private int level;
 
     public Building(BuildingType type) {
         this.type = type;
@@ -46,8 +47,13 @@ public class Building {
                 this.name = "Church";
                 this.unitType = UnitType.PALADIN;
             }
+            case ELECTROHOUSE -> {
+                this.cost = 100;
+                this.name = "Electrohouse";
+                this.unitType = null;
+            }
         }
-        this.cost = cost;
+        this.level = 1;
     }
     // Геттеры
     public BuildingType getType() {
@@ -62,7 +68,21 @@ public class Building {
         return cost;
     }
 
+    public int getLevel() {
+        return level;
+    }
+
     public String getName() {
         return name;
+    }
+
+    // Сеттеры
+    public void setLevel(int level) {
+        this.level = level;
+    }
+
+    // Апдейтеры
+    public void upgradeBuilding(int level) {
+        this.level += level;
     }
 }

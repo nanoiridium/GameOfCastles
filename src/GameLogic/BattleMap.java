@@ -26,7 +26,8 @@ public class BattleMap {
     private boolean madeAMove = false;
     private boolean isAttacked = false;
     String log;
-    int turnNumber;
+    int playerTurnNumber;
+    int computerTurnNumber;
 
     private BotAI botAI;
 
@@ -43,16 +44,17 @@ public class BattleMap {
     public Hero startFight() throws IOException {
         selectedUnit = playerHero.getArmy().get(0);
         selectedUnitIndex = 0;
-        turnNumber = 0;
+        playerTurnNumber = computerTurnNumber = 0;
         while (!isBattleOver()) {
-            turnNumber++;
             updateMap();
             printMap();
             if (isPlayerTurn) {
+                playerTurnNumber++;
                 playerTurn();
                 updateMap();
                 printMap();
             } else {
+                computerTurnNumber++;
                 computerTurn();
                 updateMap();
                 printMap();
@@ -68,7 +70,7 @@ public class BattleMap {
             showLog();
             return;
         }
-        log += "Player Turn " + turnNumber + ":\n";
+        log += "\n" + "Player Turn " + playerTurnNumber + ":\n";
         if(!playerHero.getArmy().contains(selectedUnit))
         {
             selectedUnit = playerHero.getArmy().get(0);
@@ -77,6 +79,8 @@ public class BattleMap {
         do {
             updateMap();
             printMap();
+            console.println(playerHero.toString());
+            console.println(computerHero.toString());
             console.println("Selected unit: " + selectedUnit.getSymbol());
             input = console.readLine(
                     """
@@ -107,7 +111,7 @@ public class BattleMap {
 
     private void computerTurn()
     {
-        log += "Computer Turn " + (turnNumber - 1) + ":\n";
+        log += "\n" + "Computer Turn " + computerTurnNumber + ":\n";
         botAI.performBattleAction();
     }
 
@@ -225,10 +229,7 @@ public class BattleMap {
                 playerHero.getHomeCastle().addGold(gold);
                 isAttacked = true;
 
-                if(enemy.isDead())
-                {
-                    computerHero.getArmy().remove(enemy);
-                }
+                computerHero.removeDeadUnits();
             }
             case "l" ->
             {
@@ -253,36 +254,13 @@ public class BattleMap {
 
     public int attack(Unit unit, Unit enemy)
     {
-        int totalEnemyHealth = (enemy.getAmount() - 1) * enemy.getMaxHealth() + enemy.getCurrentHealth();
-        int totalUnitHealth = (unit.getAmount() - 1) * unit.getMaxHealth() + unit.getCurrentHealth();
 
+        int totalUnitHealth = (unit.getAmount() - 1) * unit.getMaxHealth() + unit.getCurrentHealth();
         int unitDamage = unit.getAmount() * unit.getAttack();
 
-        int totalEnemySurvHealth = totalEnemyHealth - unitDamage;
-        int enemySurv;
-        int enemyHealth;
-
-        int enemyKilled;
-
-        if(totalEnemySurvHealth > 0) {
-            enemySurv = totalEnemySurvHealth / enemy.getMaxHealth();
-            enemyHealth = totalEnemySurvHealth % enemy.getMaxHealth();
-            if(enemyHealth == 0)
-            {
-                enemySurv--;
-                enemyHealth = enemy.getMaxHealth();
-            }
-        } else
-        {
-            enemySurv = 0;
-            enemyHealth = 0;
-            enemy.setDead();
-        }
-
-        enemyKilled = enemy.getAmount() - enemySurv;
-
-        enemy.setAmount(enemySurv);
-        enemy.setCurrentHealth(enemyHealth);
+        List<Integer> causalities = enemy.acceptDamage(unitDamage);
+        int enemyKilled = causalities.get(0);
+        int enemySurv = causalities.get(1);
 
         log += "<" + unit.getOwner().getSymbol() + ">:" + unit.getSymbol() + " attacks <"+ enemy.getOwner().getSymbol()
                 + ">:" + enemy.getSymbol() + "  Damage: " + unitDamage

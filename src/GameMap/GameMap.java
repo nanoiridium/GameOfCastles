@@ -5,26 +5,39 @@ import java.util.Arrays;
 import java.util.List;
 
 import Buildings.Castle;
+import Entities.ElectroWall;
 import Entities.Hero;
 import jline.console.ConsoleReader;
 
 public class GameMap {
     private char[][] grid;
     private int size;
-    private String clearStr;
+    private char[][] clearedMap;
     private ConsoleReader console = new ConsoleReader();
 
     public GameMap(int size) throws IOException {
         this.size = size;
         grid = new char[size][size];
-        inititializeClrScr();
+        //inititializeClrMap();
+        clearMap();
         initializeMap(); // генерация препятствий, дороги и замков
     }
 
-    private void inititializeClrScr(){
-        char[] clear = new char[size*size];
-        Arrays.fill(clear, '\b');
-        clearStr = new String(clear);
+    private void inititializeClrMap(){
+        clearedMap = new char[size][size];
+        for(int i = 0; i < size; i++){
+            for(int j = 0; j < size; j++){
+                clearedMap[i][j] = ' ';
+            }
+        }
+    }
+
+    public void clearMap(){
+        for(int i = 0; i < size; i++){
+            for(int j = 0; j < size; j++){
+                grid[i][j] = ' ';
+            }
+        }
     }
 
     private void initializeMap() {
@@ -45,6 +58,7 @@ public class GameMap {
     }
 
     public void updateMap(Castle playerCastle, Castle computerCastle) {
+        clearMap();
         initializeMap();
         // Отрисовка героев на карте
         List<Hero> playerHeroes = playerCastle.getHeroes();
@@ -52,15 +66,15 @@ public class GameMap {
 
         for (Hero hero : playerHeroes) {
             grid[hero.getxCoord()][hero.getyCoord()] = hero.getSymbol();
-
-            grid[playerCastle.getxCoord()][playerCastle.getyCoord()] = playerCastle.getSymbol();
         }
+            grid[playerCastle.getxCoord()][playerCastle.getyCoord()] = playerCastle.getSymbol();
 
         for (Hero hero : computerHeroes) {
             grid[hero.getxCoord()][hero.getyCoord()] = hero.getSymbol();
-
-            grid[computerCastle.getxCoord()][computerCastle.getyCoord()] = computerCastle.getSymbol();
         }
+            grid[computerCastle.getxCoord()][computerCastle.getyCoord()] = computerCastle.getSymbol();
+
+        printElectroWall(playerCastle);
     }
 
     public void printMap() throws IOException {
@@ -72,6 +86,18 @@ public class GameMap {
                 console.print(grid[i][j] + " ");
             }
             console.println();
+        }
+    }
+
+    private void printElectroWall(Castle playerCastle) {
+        if (playerCastle.getElectroWall() != null) {
+            ElectroWall wall = playerCastle.getElectroWall();
+            int x = wall.getxCoord();
+            int y = wall.getyCoord();
+            String string = wall.getString();
+            for (int i = 0; i < string.length(); i++) {
+                grid[x][y + i] = string.charAt(i);
+            }
         }
     }
 
